@@ -1,0 +1,19 @@
+{
+  "name": "contract-risk-scanner",
+  "version": "1.0.0",
+  "description": "Pharos/Anvita Skill",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npx ts-node tests/scanner.test.ts",
+    "scan": "npx ts-node src/cli.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

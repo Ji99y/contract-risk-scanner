@@ -1,0 +1,101 @@
+{
+  "skill_id": "contract-risk-scanner",
+  "name": "ContractRiskScanner",
+  "version": "1.0.0",
+  "description": "Pre-transaction security check for EVM contract addresses and wallet addresses. Returns a structured risk report with a score (0-100), risk level, specific flags, and a PROCEED / CAUTION / BLOCK recommendation. Powered by GoPlus Security APIs.",
+  "author": "Pharos Hackathon Submission",
+  "license": "MIT",
+  "tags": ["security", "risk", "EVM", "DeFi", "GoPlus", "pre-transaction"],
+  "category": "security",
+  "chain_support": ["ethereum", "bsc", "polygon", "arbitrum", "optimism", "avalanche", "fantom", "base", "linea", "scroll", "zkSync"],
+  "input_schema": {
+    "type": "object",
+    "required": ["address", "chainId"],
+    "properties": {
+      "address": {
+        "type": "string",
+        "description": "EVM contract address or wallet address to scan (0x...)",
+        "pattern": "^0x[a-fA-F0-9]{40}$"
+      },
+      "chainId": {
+        "type": ["string", "number"],
+        "description": "EVM chain ID. Common values: 1 (Ethereum), 56 (BSC), 137 (Polygon), 42161 (Arbitrum), 8453 (Base)",
+        "examples": [1, 56, 137, 42161, 8453]
+      },
+      "checkType": {
+        "type": "string",
+        "enum": ["token", "address", "both"],
+        "default": "both",
+        "description": "Type of check to perform. 'token' checks ERC-20 contract risks. 'address' checks if the address is flagged as malicious. 'both' runs both checks."
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "riskScore": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Composite risk score. 0 = safe, 100 = critical risk."
+      },
+      "riskLevel": {
+        "type": "string",
+        "enum": ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"],
+        "description": "Human-readable risk level derived from riskScore."
+      },
+      "recommendation": {
+        "type": "string",
+        "enum": ["PROCEED", "CAUTION", "BLOCK"],
+        "description": "Action recommendation for the calling agent. PROCEED = safe to transact. CAUTION = review flags before proceeding. BLOCK = do not transact."
+      },
+      "flags": {
+        "type": "array",
+        "description": "List of specific risk flags detected.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "description": "Unique flag identifier (e.g. HONEYPOT, ADDR_PHISHING)" },
+            "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "message": { "type": "string", "description": "Human-readable explanation of the risk" },
+            "source": { "type": "string", "enum": ["token_security", "address_security"] }
+          }
+        }
+      },
+      "details": {
+        "type": "object",
+        "description": "Full breakdown of checks: token metadata, address info, and any API notes."
+      }
+    }
+  },
+  "examples": [
+    {
+      "description": "Check a token before buying on BSC",
+      "input": { "address": "0x...", "chainId": 56, "checkType": "token" },
+      "output": {
+        "riskScore": 60,
+        "riskLevel": "CRITICAL",
+        "recommendation": "BLOCK",
+        "flags": [
+          { "id": "HONEYPOT", "severity": "critical", "message": "Token is a honeypot — you can buy but cannot sell", "source": "token_security" }
+        ]
+      }
+    },
+    {
+      "description": "Check a recipient wallet before sending funds",
+      "input": { "address": "0x...", "chainId": 1, "checkType": "address" },
+      "output": {
+        "riskScore": 0,
+        "riskLevel": "SAFE",
+        "recommendation": "PROCEED",
+        "flags": []
+      }
+    }
+  ],
+  "rate_limits": {
+    "note": "Uses GoPlus public API (no key required). Free tier is rate-limited. For high-frequency use, obtain a GoPlus API key and set GOPLUS_API_KEY env variable."
+  },
+  "certik_scan": {
+    "note": "This Skill has been designed to pass CertiK Skill Scanner checks. No shell execution, no file system access, no unauthorized network calls (only api.gopluslabs.io), no secrets in code."
+  }
+}
