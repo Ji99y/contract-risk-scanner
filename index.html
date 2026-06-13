@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ContractRiskScanner — Pharos Skill</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f2f7;
+    --muted: #8890a0;
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.12);
+    --cyan-border: rgba(34,211,238,0.25);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.1);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251,191,36,0.1);
+    --orange: #fb923c;
+    --orange-dim: rgba(251,146,60,0.1);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.1);
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; }
+
+  a { color: var(--cyan); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--cyan); }
+  pre { font-family: var(--mono); font-size: 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; overflow-x: auto; line-height: 1.7; color: #c9d1e0; margin: 1rem 0; }
+  pre .k { color: var(--cyan); }
+  pre .s { color: var(--green); }
+  pre .c { color: var(--muted); }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,12,16,0.9); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.875rem 0;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; color: var(--text); }
+  .nav-logo svg { color: var(--cyan); }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { font-size: 14px; color: var(--muted); transition: color 0.15s; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+  .nav-gh { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border2); padding: 6px 14px; border-radius: 8px; font-size: 13px; color: var(--text); transition: border-color 0.15s; }
+  .nav-gh:hover { border-color: var(--cyan); text-decoration: none; }
+
+  .hero { padding: 5rem 0 4rem; text-align: center; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse at center, rgba(34,211,238,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--cyan-dim); border: 1px solid var(--cyan-border); color: var(--cyan); font-size: 12px; font-weight: 500; padding: 4px 14px; border-radius: 99px; margin-bottom: 1.5rem; letter-spacing: 0.03em; }
+  .hero h1 { font-size: clamp(32px, 6vw, 52px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 1.25rem; }
+  .hero h1 span { color: var(--cyan); }
+  .hero p { font-size: 17px; color: var(--muted); max-width: 540px; margin: 0 auto 2.5rem; }
+  .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--cyan); color: #0a0c10; font-weight: 600; font-size: 14px; padding: 11px 22px; border-radius: 10px; transition: opacity 0.15s; border: none; cursor: pointer; }
+  .btn-primary:hover { opacity: 0.88; text-decoration: none; }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 14px; padding: 11px 22px; border-radius: 10px; transition: border-color 0.15s; }
+  .btn-secondary:hover { border-color: var(--cyan); text-decoration: none; }
+  .hero-stats { display: flex; gap: 2rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--cyan); letter-spacing: -0.02em; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .divider { height: 1px; background: var(--border); margin: 3rem 0; }
+
+  .scanner-section { padding: 3rem 0; }
+  .section-eyebrow { font-size: 12px; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .section-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+  .section-sub { font-size: 15px; color: var(--muted); margin-bottom: 2rem; }
+
+  .scanner-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  .tab-btn { padding: 0.6rem 1.25rem; font-size: 14px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; font-family: var(--font); margin-bottom: -1px; transition: color 0.15s; }
+  .tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  .scanner-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+  .input-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 1rem; }
+  .scanner-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: var(--mono); outline: none; transition: border-color 0.15s; }
+  .scanner-input:focus { border-color: var(--cyan); }
+  .chain-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: var(--font); outline: none; cursor: pointer; transition: border-color 0.15s; }
+  .chain-select:focus { border-color: var(--cyan); }
+  .check-pills { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .check-pill { padding: 6px 16px; font-size: 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; color: var(--muted); cursor: pointer; font-family: var(--font); transition: all 0.15s; }
+  .check-pill.active { background: var(--cyan-dim); border-color: var(--cyan-border); color: var(--cyan); }
+  .scan-submit { width: 100%; background: var(--cyan); color: #0a0c10; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s; }
+  .scan-submit:hover { opacity: 0.88; }
+  .scan-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .batch-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text); font-family: var(--mono); outline: none; resize: vertical; min-height: 110px; line-height: 1.6; transition: border-color 0.15s; }
+  .batch-textarea:focus { border-color: var(--cyan); }
+  .batch-hint { font-size: 12px; color: var(--muted); margin: 8px 0 1rem; line-height: 1.5; }
+
+  .result-wrap { margin-top: 1.25rem; }
+  .result-box { background: var(--surface2); border-radius: 12px; border: 1px solid var(--border); padding: 1.25rem; }
+  .result-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1rem; }
+  .verdict-block { flex: 1; }
+  .verdict-addr { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 6px; word-break: break-all; }
+  .verdict-row { display: flex; align-items: center; gap: 10px; }
+  .risk-pill { font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 99px; letter-spacing: 0.04em; }
+  .rp-SAFE, .rp-LOW { background: var(--green-dim); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+  .rp-MEDIUM { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+  .rp-HIGH { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(251,146,60,0.25); }
+  .rp-CRITICAL { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+  .rp-UNKNOWN { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .rec-label { font-size: 14px; font-weight: 600; }
+  .rc-PROCEED { color: var(--green); }
+  .rc-CAUTION { color: var(--yellow); }
+  .rc-BLOCK { color: var(--red); }
+  .score-block { text-align: right; flex-shrink: 0; }
+  .score-big { font-size: 28px; font-weight: 700; }
+  .score-denom { font-size: 12px; color: var(--muted); }
+  .score-bar-bg { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; width: 80px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+  .flags-wrap { margin-top: 1rem; }
+  .flags-head { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .flag-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; }
+  .flag-sev-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; flex-shrink: 0; margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .fs-critical { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .fs-high { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(251,146,60,0.2); }
+  .fs-medium { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .fs-low { background: var(--green-dim); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .flag-text { font-size: 13px; }
+  .flag-code { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .no-flags-msg { text-align: center; padding: 1.5rem; color: var(--muted); font-size: 14px; }
+  .no-flags-icon { font-size: 24px; margin-bottom: 6px; }
+
+  .token-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .meta-cell { background: var(--surface); border-radius: 8px; padding: 10px 12px; }
+  .meta-cell-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .meta-cell-val { font-size: 13px; font-weight: 500; }
+
+  .batch-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .bsum { background: var(--surface2); border-radius: 10px; padding: 0.9rem; border: 1px solid var(--border); }
+  .bsum-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .bsum-val { font-size: 22px; font-weight: 700; }
+  .batch-row-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .batch-row-addr { font-family: var(--mono); font-size: 11px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .batch-row-chain { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .batch-row-score { font-size: 13px; font-weight: 600; min-width: 32px; text-align: right; flex-shrink: 0; }
+
+  .loading-state { text-align: center; padding: 2rem; color: var(--muted); font-size: 14px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.65s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .err-box { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 1rem 1.25rem; font-size: 13px; color: var(--red); margin-top: 1rem; }
+
+  .features { padding: 3rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+  .feature-icon { font-size: 20px; margin-bottom: 1rem; }
+  .feature-title { font-size: 15px; font-weight: 600; margin-bottom: 0.5rem; }
+  .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .docs { padding: 3rem 0; }
+  .docs h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 2.5rem 0 0.75rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .docs h2:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+  .docs h3 { font-size: 15px; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--cyan); }
+  .docs p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 0.75rem; }
+  .param-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 1rem 0; }
+  .param-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .param-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .param-table td:first-child { font-family: var(--mono); font-size: 12px; color: var(--cyan); }
+  .param-table td:nth-child(2) { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .param-table td:last-child { color: var(--muted); }
+  .req-tag { font-size: 10px; background: var(--red-dim); color: var(--red); padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+  .opt-tag { font-size: 10px; background: var(--surface2); color: var(--muted); padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+
+  .chains-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 1rem 0; }
+  .chain-chip { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+  .chain-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .chain-chip-id { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .footer-left { font-size: 13px; color: var(--muted); }
+  .footer-left strong { color: var(--text); }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { font-size: 13px; color: var(--muted); transition: color 0.15s; }
+  .footer-links a:hover { color: var(--cyan); text-decoration: none; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  @media (max-width: 600px) {
+    .input-row { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    .batch-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .token-meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10 2L3 5.5V10.5C3 14.09 6.04 17.42 10 18.5C13.96 17.42 17 14.09 17 10.5V5.5L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+        <path d="M7 10L9 12L13 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      ContractRiskScanner
+    </div>
+    <div class="nav-links">
+      <a href="#scanner">Scanner</a>
+      <a href="#features">Features</a>
+      <a href="#docs">Docs</a>
+    </div>
+    <a href="https://github.com/Ji99y/contract-risk-scanner" class="btn-secondary nav-gh" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-pill">
+      <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="10" r="4"/></svg>
+      Pharos · Phase 1 Hackathon Submission
+    </div>
+    <h1>Security checks before<br /><span>any transaction signs</span></h1>
+    <p>A reusable Pharos/Anvita Skill that gives any agent a PROCEED · CAUTION · BLOCK verdict in milliseconds. Powered by GoPlus Security APIs.</p>
+    <div class="hero-btns">
+      <a href="#scanner" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M13 13l3 3"/><circle cx="10" cy="10" r="3.5"/></svg>
+        Try the scanner
+      </a>
+      <a href="https://github.com/Ji99y/contract-risk-scanner" class="btn-secondary" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        View source
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">30</div><div class="stat-label">Risk checks</div></div>
+      <div class="stat"><div class="stat-num">11</div><div class="stat-label">EVM chains</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">API keys needed</div></div>
+      <div class="stat"><div class="stat-num">13/13</div><div class="stat-label">Tests passing</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="scanner-section" id="scanner">
+  <div class="container">
+    <div class="section-eyebrow">Live demo</div>
+    <div class="section-title">Try it now</div>
+    <div class="section-sub">Scan any EVM contract or wallet address in real time. Data from GoPlus Security APIs.</div>
+
+    <div class="scanner-card">
+      <div class="scanner-tabs">
+        <button class="tab-btn active" onclick="switchTab('single', this)">Single scan</button>
+        <button class="tab-btn" onclick="switchTab('batch', this)">Batch scan</button>
+      </div>
+
+      <div id="panel-single" class="tab-panel active">
+        <div class="input-row">
+          <input class="scanner-input" id="single-addr" type="text" placeholder="0x6b175474e89094c44da98b954eedeac495271d0f" spellcheck="false" />
+          <select class="chain-select" id="single-chain">
+            <option value="1">Ethereum</option>
+            <option value="56">BNB Chain</option>
+            <option value="137">Polygon</option>
+            <option value="42161">Arbitrum</option>
+            <option value="8453">Base</option>
+            <option value="10">Optimism</option>
+            <option value="43114">Avalanche</option>
+            <option value="324">zkSync</option>
+            <option value="59144">Linea</option>
+            <option value="250">Fantom</option>
+          </select>
+        </div>
+        <div class="check-pills">
+          <button class="check-pill active" onclick="setCheck('both',this)">Both checks</button>
+          <button class="check-pill" onclick="setCheck('token',this)">Token only</button>
+          <button class="check-pill" onclick="setCheck('address',this)">Address only</button>
+        </div>
+        <button class="scan-submit" id="single-btn" onclick="doSingleScan()">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M13 13l3 3"/><circle cx="10" cy="10" r="3.5"/></svg>
+          Scan address
+        </button>
+        <div id="single-result" class="result-wrap"></div>
+      </div>
+
+      <div id="panel-batch" class="tab-panel">
+        <textarea class="batch-textarea" id="batch-addrs" placeholder="0x6b175474e89094c44da98b954eedeac495271d0f,1&#10;0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48,1&#10;0x64c37c3d6b5ff0fdea26eec0c8b6de487105291c,56"></textarea>
+        <p class="batch-hint">One address per line in format: <code>address,chainId</code>. Up to 10 addresses. Scanned in parallel batches of 3.</p>
+        <button class="scan-submit" id="batch-btn" onclick="doBatchScan()">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="14" height="3" rx="1"/><rect x="3" y="9" width="14" height="3" rx="1"/><rect x="3" y="14" width="14" height="3" rx="1"/></svg>
+          Scan all addresses
+        </button>
+        <div id="batch-result" class="result-wrap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="divider"></div>
+    <div class="section-eyebrow">Why it matters</div>
+    <div class="section-title">Built for agents, not humans</div>
+    <div class="section-sub">Every DeFi agent needs a security gate. This is it.</div>
+    <div class="features" style="padding: 0 0 3rem;">
+      <div class="feature-card">
+        <div class="feature-icon">🛡</div>
+        <div class="feature-title">30 checks in one call</div>
+        <div class="feature-desc">19 token-level checks (honeypot, tax, mintability, ownership) + 11 address-level checks (phishing, blacklist, cybercrime) run in parallel.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Batch scan up to 10</div>
+        <div class="feature-desc">Scan multiple addresses simultaneously with concurrency control. Get a summary with total / safe / caution / blocked counts and scan duration.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔑</div>
+        <div class="feature-title">No API key required</div>
+        <div class="feature-desc">Uses GoPlus Security's public API tier. Zero setup for any agent to start calling this Skill immediately on any of 11 supported EVM chains.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <div class="feature-title">CertiK Skill Scanner ready</div>
+        <div class="feature-desc">No shell execution, no filesystem access, minimal network scope (GoPlus API only), no hardcoded secrets. Designed to pass CertiK review from day one.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <div class="feature-title">Composable by design</div>
+        <div class="feature-desc">Any Pharos agent can import <code>run()</code> or <code>runBatch()</code> in one line. The Skill is the gate — agents decide what to do with the verdict.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Structured output</div>
+        <div class="feature-desc">Returns a typed JSON report: risk score (0–100), risk level, recommendation, flag list sorted critical-first, and full token metadata.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="container">
+    <div class="divider"></div>
+    <div class="section-eyebrow">Documentation</div>
+    <div class="section-title">API reference</div>
+
+    <div class="docs">
+      <h2>Installation</h2>
+      <pre><span class="c"># Clone the repo</span>
+git clone https://github.com/Ji99y/contract-risk-scanner
+cd contract-risk-scanner
+npm install</pre>
+
+      <h2>Quick start</h2>
+      <pre><span class="k">import</span> { run, runBatch } <span class="k">from</span> <span class="s">"./src/index"</span>;
+
+<span class="c">// Single scan</span>
+<span class="k">const</span> result = <span class="k">await</span> run({
+  address: <span class="s">"0x6b175474e89094c44da98b954eedeac495271d0f"</span>,
+  chainId: 1,
+  checkType: <span class="s">"both"</span>
+});
+
+<span class="k">if</span> (result.recommendation === <span class="s">"BLOCK"</span>) {
+  <span class="k">throw new</span> Error(<span class="s">"Blocked: "</span> + result.flags[0].message);
+}</pre>
+
+      <h2>Single scan — <code>run(input)</code></h2>
+      <h3>Input parameters</h3>
+      <table class="param-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>address <span class="req-tag">required</span></td><td>string</td><td>EVM address to scan (0x…)</td></tr>
+          <tr><td>chainId <span class="req-tag">required</span></td><td>string | number</td><td>EVM chain ID (1 = Ethereum, 56 = BNB Chain, etc.)</td></tr>
+          <tr><td>checkType <span class="opt-tag">optional</span></td><td>"token" | "address" | "both"</td><td>Which checks to run. Defaults to "both"</td></tr>
+        </tbody>
+      </table>
+      <h3>Output</h3>
+      <table class="param-table">
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>riskScore</td><td>number</td><td>0 (safe) to 100 (critical risk)</td></tr>
+          <tr><td>riskLevel</td><td>string</td><td>SAFE / LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN</td></tr>
+          <tr><td>recommendation</td><td>string</td><td>PROCEED / CAUTION / BLOCK</td></tr>
+          <tr><td>flags</td><td>RiskFlag[]</td><td>Detected risk flags, sorted critical-first</td></tr>
+          <tr><td>details</td><td>object</td><td>Token metadata (name, symbol, tax rates, holders) and API notes</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Batch scan — <code>runBatch(input)</code></h2>
+      <pre><span class="k">const</span> batch = <span class="k">await</span> runBatch({
+  addresses: [
+    { address: <span class="s">"0x..."</span>, chainId: 1 },
+    { address: <span class="s">"0x..."</span>, chainId: 56, checkType: <span class="s">"token"</span> },
+  ],
+  concurrency: 3  <span class="c">// max parallel requests, default 3</span>
+});
+
+<span class="c">// batch.summary</span>
+<span class="c">// { total: 2, safe: 1, caution: 0, blocked: 1,</span>
+<span class="c">//   highestRisk: "CRITICAL", scanDurationMs: 1240 }</span></pre>
+
+      <h2>Supported chains</h2>
+      <div class="chains-grid">
+        <div class="chain-chip"><div class="chain-dot" style="background:#627EEA"></div>Ethereum<span class="chain-chip-id">1</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#F3BA2F"></div>BNB Chain<span class="chain-chip-id">56</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#8247E5"></div>Polygon<span class="chain-chip-id">137</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#28A0F0"></div>Arbitrum<span class="chain-chip-id">42161</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#0052FF"></div>Base<span class="chain-chip-id">8453</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#FF0420"></div>Optimism<span class="chain-chip-id">10</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#E84142"></div>Avalanche<span class="chain-chip-id">43114</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#4E529A"></div>zkSync<span class="chain-chip-id">324</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#61DFFF"></div>Linea<span class="chain-chip-id">59144</span></div>
+        <div class="chain-chip"><div class="chain-dot" style="background:#1969FF"></div>Fantom<span class="chain-chip-id">250</span></div>
+      </div>
+
+      <h2>Risk flags reference</h2>
+      <h3>Token security — 19 checks</h3>
+      <pre>HONEYPOT                critical   Token is a honeypot — cannot sell
+OWNER_CAN_CHANGE_BALANCE critical   Owner can modify holder balances
+SELFDESTRUCT            critical   Contract can self-destruct
+EXTREME_SELL_TAX        critical   Sell tax above 50%
+CANNOT_BUY              critical   Token cannot be purchased
+HIDDEN_OWNER            high       Ownership can be reclaimed
+MINTABLE                high       Owner can mint unlimited tokens
+CAN_TAKE_BACK_OWNERSHIP high       Owner can reclaim contract
+NOT_OPEN_SOURCE         high       Source code not verified
+HIGH_SELL_TAX           high       Sell tax above 10%
+HIGH_BUY_TAX            high       Buy tax above 10%
+CANNOT_SELL_ALL         high       Cannot sell entire balance
+AIRDROP_SCAM            high       Flagged as airdrop scam
+TRANSFER_PAUSABLE       medium     Transfers can be paused
+PROXY_CONTRACT          medium     Upgradeable proxy
+SLIPPAGE_MODIFIABLE     medium     Owner can modify slippage
+IS_BLACKLISTED          medium     Blacklist mechanism present
+EXTERNAL_CALL           medium     External calls during transfer
+TRADING_COOLDOWN        low        Trading cooldown enforced</pre>
+
+      <h3>Address security — 11 checks</h3>
+      <pre>ADDR_PHISHING           critical   Phishing activity flagged
+ADDR_HONEYPOT_RELATED   critical   Associated with known honeypots
+ADDR_BLACKMAIL          critical   Blackmail / extortion flagged
+ADDR_STEALING           critical   Theft / stealing attacks
+ADDR_DARKWEB            critical   Dark web transactions
+ADDR_CYBERCRIME         critical   Cybercrime links
+ADDR_MONEY_LAUNDERING   critical   Money laundering flagged
+ADDR_FINANCIAL_CRIME    critical   Financial crime flagged
+ADDR_FAKE_KYC           high       Fake KYC schemes
+ADDR_BLACKLIST          high       Security blacklist match
+ADDR_MALICIOUS_MINING   high       Malicious mining operations</pre>
+
+      <h2>Running tests</h2>
+      <pre>npm test
+<span class="c"># → 13 passed, 0 failed</span></pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left"><strong>ContractRiskScanner</strong> · Pharos x Anvita Hackathon · Phase 1 · Built with GoPlus Security</div>
+      <div class="footer-links">
+        <a href="https://github.com/Ji99y/contract-risk-scanner" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://gopluslabs.io" target="_blank" rel="noopener">GoPlus</a>
+        <a href="https://pharos.xyz" target="_blank" rel="noopener">Pharos</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+let checkType = 'both';
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setCheck(type, btn) {
+  checkType = type;
+  document.querySelectorAll('.check-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function scoreColor(score) {
+  if (score === 0) return '#4ade80';
+  if (score <= 15) return '#4ade80';
+  if (score <= 30) return '#fbbf24';
+  if (score <= 55) return '#fb923c';
+  return '#f87171';
+}
+
+function renderSingleResult(data, address) {
+  const flags = data.flags || [];
+  const token = data.details && data.details.token ? data.details.token : null;
+  const col = scoreColor(data.riskScore);
+
+  const flagsHtml = flags.length === 0
+    ? `<div class="no-flags-msg"><div class="no-flags-icon">🛡</div>No risk flags detected</div>`
+    : flags.map(f => `
+      <div class="flag-row">
+        <span class="flag-sev-pill fs-${f.severity}">${f.severity}</span>
+        <div>
+          <div class="flag-text">${f.message}</div>
+          <div class="flag-code">${f.id} · ${f.source}</div>
+        </div>
+      </div>`).join('');
+
+  const metaHtml = token ? `
+    <div class="token-meta-grid">
+      <div class="meta-cell"><div class="meta-cell-label">Token</div><div class="meta-cell-val">${token.name || '—'} (${token.symbol || '—'})</div></div>
+      <div class="meta-cell"><div class="meta-cell-label">Holders</div><div class="meta-cell-val">${Number(token.holderCount||0).toLocaleString()}</div></div>
+      <div class="meta-cell"><div class="meta-cell-label">Buy tax</div><div class="meta-cell-val">${token.buyTax || '—'}</div></div>
+      <div class="meta-cell"><div class="meta-cell-label">Sell tax</div><div class="meta-cell-val">${token.sellTax || '—'}</div></div>
+    </div>` : '';
+
+  return `
+    <div class="result-box">
+      <div class="result-top">
+        <div class="verdict-block">
+          <div class="verdict-addr">${address}</div>
+          <div class="verdict-row">
+            <span class="risk-pill rp-${data.riskLevel}">${data.riskLevel}</span>
+            <span class="rec-label rc-${data.recommendation}">${data.recommendation}</span>
+          </div>
+        </div>
+        <div class="score-block">
+          <div class="score-big" style="color:${col}">${data.riskScore}</div>
+          <div class="score-denom">/ 100</div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${data.riskScore}%;background:${col}"></div></div>
+        </div>
+      </div>
+      <div class="flags-wrap">
+        <div class="flags-head">${flags.length} flag${flags.length !== 1 ? 's' : ''} detected</div>
+        ${flagsHtml}
+      </div>
+      ${metaHtml}
+    </div>`;
+}
+
+async function doSingleScan() {
+  const addr = document.getElementById('single-addr').value.trim();
+  const chainId = document.getElementById('single-chain').value;
+  const resultDiv = document.getElementById('single-result');
+  const btn = document.getElementById('single-btn');
+  if (!addr) { resultDiv.innerHTML = '<div class="err-box">Please enter a contract or wallet address.</div>'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Scanning...';
+  resultDiv.innerHTML = '<div class="loading-state"><span class="spinner"></span> Querying GoPlus Security APIs...</div>';
+
+  try {
+    const [tr, ar] = await Promise.allSettled([
+      fetch(`https://api.gopluslabs.io/api/v1/token_security/${chainId}?contract_addresses=${addr.toLowerCase()}`).then(r => r.json()),
+      fetch(`https://api.gopluslabs.io/api/v1/address_security/${addr.toLowerCase()}?chain_id=${chainId}`).then(r => r.json())
+    ]);
+    const tokenData = tr.status === 'fulfilled' && tr.value.code === 1 ? tr.value.result[Object.keys(tr.value.result)[0]] : null;
+    const addrData = ar.status === 'fulfilled' && ar.value.code === 1 ? ar.value.result : null;
+    const report = buildReport(tokenData, addrData, checkType);
+    resultDiv.innerHTML = renderSingleResult(report, addr);
+  } catch(e) {
+    resultDiv.innerHTML = '<div class="err-box">Request failed. Check your connection and try again.</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="M13 13l3 3"/><circle cx="10" cy="10" r="3.5"/></svg> Scan address';
+}
+
+async function doBatchScan() {
+  const raw = document.getElementById('batch-addrs').value.trim();
+  const resultDiv = document.getElementById('batch-result');
+  const btn = document.getElementById('batch-btn');
+  if (!raw) { resultDiv.innerHTML = '<div class="err-box">Enter at least one address.</div>'; return; }
+
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 10);
+  const items = lines.map(l => { const [a, c] = l.split(','); return { address: (a||'').trim(), chainId: (c||'1').trim() }; });
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Scanning ' + items.length + ' addresses...';
+  resultDiv.innerHTML = '<div class="loading-state"><span class="spinner"></span> Running batch scan...</div>';
+
+  const results = [];
+  for (let i = 0; i < items.length; i += 3) {
+    const chunk = items.slice(i, i + 3);
+    const chunkResults = await Promise.all(chunk.map(async item => {
+      try {
+        const [tr, ar] = await Promise.allSettled([
+          fetch(`https://api.gopluslabs.io/api/v1/token_security/${item.chainId}?contract_addresses=${item.address.toLowerCase()}`).then(r=>r.json()),
+          fetch(`https://api.gopluslabs.io/api/v1/address_security/${item.address.toLowerCase()}?chain_id=${item.chainId}`).then(r=>r.json())
+        ]);
+        const t = tr.status==='fulfilled' && tr.value.code===1 ? tr.value.result[Object.keys(tr.value.result)[0]] : null;
+        const a = ar.status==='fulfilled' && ar.value.code===1 ? ar.value.result : null;
+        return { ...buildReport(t, a, 'both'), address: item.address, chainId: item.chainId };
+      } catch {
+        return { riskScore:0, riskLevel:'UNKNOWN', recommendation:'BLOCK', flags:[], details:{}, address:item.address, chainId:item.chainId };
+      }
+    }));
+    results.push(...chunkResults);
+    if (i + 3 < items.length) await new Promise(r => setTimeout(r, 300));
+  }
+
+  let safe=0, caution=0, blocked=0;
+  for (const r of results) {
+    if (r.recommendation==='PROCEED') safe++;
+    else if (r.recommendation==='CAUTION') caution++;
+    else blocked++;
+  }
+
+  const rows = results.map(r => `
+    <div class="batch-row-item">
+      <span class="batch-row-addr">${r.address}</span>
+      <span class="batch-row-chain">chain ${r.chainId}</span>
+      <span class="risk-pill rp-${r.riskLevel}" style="font-size:11px">${r.riskLevel}</span>
+      <span class="rec-label rc-${r.recommendation}" style="font-size:12px">${r.recommendation}</span>
+      <span class="batch-row-score" style="color:${scoreColor(r.riskScore)}">${r.riskScore}</span>
+    </div>`).join('');
+
+  resultDiv.innerHTML = `
+    <div class="result-box">
+      <div class="batch-summary-grid">
+        <div class="bsum"><div class="bsum-label">Total</div><div class="bsum-val">${results.length}</div></div>
+        <div class="bsum"><div class="bsum-label">Safe</div><div class="bsum-val" style="color:#4ade80">${safe}</div></div>
+        <div class="bsum"><div class="bsum-label">Caution</div><div class="bsum-val" style="color:#fbbf24">${caution}</div></div>
+        <div class="bsum"><div class="bsum-label">Blocked</div><div class="bsum-val" style="color:#f87171">${blocked}</div></div>
+      </div>
+      ${rows}
+    </div>`;
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="3" rx="1"/><rect x="3" y="9" width="14" height="3" rx="1"/><rect x="3" y="14" width="14" height="3" rx="1"/></svg> Scan all addresses';
+}
+
+function buildReport(tokenData, addrData, checkType) {
+  const flags = [];
+  let score = 0;
+  const TOKEN_RULES = [
+    { id:'HONEYPOT', sev:'critical', msg:'Token is a honeypot — you can buy but cannot sell', w:60, fn: d=>d.is_honeypot==='1' },
+    { id:'OWNER_CAN_CHANGE_BALANCE', sev:'critical', msg:'Owner can directly modify holder balances', w:40, fn: d=>d.owner_change_balance==='1' },
+    { id:'SELFDESTRUCT', sev:'critical', msg:'Contract can self-destruct, destroying all funds', w:40, fn: d=>d.selfdestruct==='1' },
+    { id:'EXTREME_SELL_TAX', sev:'critical', msg:'Sell tax is above 50% — effectively a honeypot', w:50, fn: d=>parseFloat(d.sell_tax||0)>0.5 },
+    { id:'CANNOT_BUY', sev:'critical', msg:'Token cannot currently be purchased', w:30, fn: d=>d.cannot_buy==='1' },
+    { id:'HIDDEN_OWNER', sev:'high', msg:'Contract has a hidden owner — ownership can be reclaimed', w:25, fn: d=>d.hidden_owner==='1' },
+    { id:'MINTABLE', sev:'high', msg:'Owner can mint unlimited new tokens (inflation risk)', w:20, fn: d=>d.is_mintable==='1' },
+    { id:'CAN_TAKE_BACK_OWNERSHIP', sev:'high', msg:'Owner can reclaim contract ownership at any time', w:20, fn: d=>d.can_take_back_ownership==='1' },
+    { id:'NOT_OPEN_SOURCE', sev:'high', msg:'Contract source code is not verified / open source', w:20, fn: d=>d.is_open_source==='0' },
+    { id:'HIGH_SELL_TAX', sev:'high', msg:'Sell tax exceeds 10%', w:20, fn: d=>parseFloat(d.sell_tax||0)>0.1 },
+    { id:'HIGH_BUY_TAX', sev:'high', msg:'Buy tax exceeds 10%', w:15, fn: d=>parseFloat(d.buy_tax||0)>0.1 },
+    { id:'CANNOT_SELL_ALL', sev:'high', msg:'Holders cannot sell their entire balance at once', w:20, fn: d=>d.cannot_sell_all==='1' },
+    { id:'AIRDROP_SCAM', sev:'high', msg:'Token is flagged as an airdrop scam', w:35, fn: d=>d.is_airdrop_scam==='1' },
+    { id:'TRANSFER_PAUSABLE', sev:'medium', msg:'Transfers can be paused by the owner', w:15, fn: d=>d.transfer_pausable==='1' },
+    { id:'PROXY_CONTRACT', sev:'medium', msg:'Contract is a proxy — logic can be upgraded/replaced', w:10, fn: d=>d.is_proxy==='1' },
+    { id:'SLIPPAGE_MODIFIABLE', sev:'medium', msg:'Owner can modify slippage tolerance', w:10, fn: d=>d.slippage_modifiable==='1' },
+    { id:'IS_BLACKLISTED', sev:'medium', msg:'Contract uses a blacklist (owner can block wallets)', w:10, fn: d=>d.is_blacklisted==='1' },
+    { id:'EXTERNAL_CALL', sev:'medium', msg:'Contract makes external calls during transfer', w:12, fn: d=>d.external_call==='1' },
+    { id:'TRADING_COOLDOWN', sev:'low', msg:'Token enforces a trading cooldown', w:5, fn: d=>d.trading_cooldown==='1' },
+  ];
+  const ADDR_RULES = [
+    { id:'ADDR_PHISHING', sev:'critical', msg:'Address is flagged for phishing activities', w:60, fn: d=>d.phishing_activities==='1' },
+    { id:'ADDR_HONEYPOT_RELATED', sev:'critical', msg:'Address is associated with known honeypots', w:50, fn: d=>d.honeypot_related_address==='1' },
+    { id:'ADDR_BLACKMAIL', sev:'critical', msg:'Address is flagged for blackmail / extortion', w:60, fn: d=>d.blackmail_activities==='1' },
+    { id:'ADDR_STEALING', sev:'critical', msg:'Address is associated with theft attacks', w:60, fn: d=>d.stealing_attack==='1' },
+    { id:'ADDR_DARKWEB', sev:'critical', msg:'Address has dark web transaction history', w:50, fn: d=>d.darkweb_transactions==='1' },
+    { id:'ADDR_CYBERCRIME', sev:'critical', msg:'Address is linked to cybercrime activity', w:60, fn: d=>d.cybercrime==='1' },
+    { id:'ADDR_MONEY_LAUNDERING', sev:'critical', msg:'Address is flagged for money laundering', w:55, fn: d=>d.money_laundering==='1' },
+    { id:'ADDR_FINANCIAL_CRIME', sev:'critical', msg:'Address is associated with financial crime', w:55, fn: d=>d.financial_crime==='1' },
+    { id:'ADDR_FAKE_KYC', sev:'high', msg:'Address is linked to fake KYC schemes', w:40, fn: d=>d.fake_kyc==='1' },
+    { id:'ADDR_BLACKLIST', sev:'high', msg:'Address appears on security blacklists', w:30, fn: d=>d.blacklist_doubt==='1' },
+    { id:'ADDR_MALICIOUS_MINING', sev:'high', msg:'Address is linked to malicious mining', w:30, fn: d=>d.malicious_mining_activities==='1' },
+  ];
+  const details = {};
+  if (tokenData && checkType !== 'address') {
+    if (tokenData.trust_list === '1') { score = 0; }
+    else { for (const r of TOKEN_RULES) { if (r.fn(tokenData)) { flags.push({ id:r.id, severity:r.sev, message:r.msg, source:'token_security' }); score += r.w; } } }
+    details.token = { name:tokenData.token_name, symbol:tokenData.token_symbol, holderCount:tokenData.holder_count, buyTax:tokenData.buy_tax?(parseFloat(tokenData.buy_tax)*100).toFixed(1)+'%':'unknown', sellTax:tokenData.sell_tax?(parseFloat(tokenData.sell_tax)*100).toFixed(1)+'%':'unknown' };
+  }
+  if (addrData && checkType !== 'token') { for (const r of ADDR_RULES) { if (r.fn(addrData)) { flags.push({ id:r.id, severity:r.sev, message:r.msg, source:'address_security' }); score += r.w; } } }
+  score = Math.min(100, Math.max(0, score));
+  const sevOrder = {critical:0,high:1,medium:2,low:3};
+  flags.sort((a,b)=>sevOrder[a.severity]-sevOrder[b.severity]);
+  let riskLevel = 'SAFE';
+  if (score > 0) riskLevel = 'LOW';
+  if (score > 15) riskLevel = 'MEDIUM';
+  if (score > 30) riskLevel = 'HIGH';
+  if (score > 55) riskLevel = 'CRITICAL';
+  if (!tokenData && !addrData) riskLevel = 'UNKNOWN';
+  const recommendation = (riskLevel==='SAFE'||riskLevel==='LOW') ? 'PROCEED' : riskLevel==='MEDIUM' ? 'CAUTION' : 'BLOCK';
+  return { riskScore:score, riskLevel, recommendation, flags, details };
+}
+</script>
+</body>
+</html>
