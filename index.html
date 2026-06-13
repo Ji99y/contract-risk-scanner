@@ -75,7 +75,7 @@
   .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 14px; padding: 11px 22px; border-radius: 10px; transition: border-color 0.15s; }
   .btn-secondary:hover { border-color: var(--cyan); text-decoration: none; }
   .hero-stats { display: flex; gap: 2rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
-  .stat { text-align: center; }
+  .stat { text-align: center; min-width: 80px; }
   .stat-num { font-size: 28px; font-weight: 700; color: var(--cyan); letter-spacing: -0.02em; }
   .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
@@ -250,7 +250,7 @@
     </div>
     <div class="hero-stats">
       <div class="stat"><div class="stat-num">30</div><div class="stat-label">Risk checks</div></div>
-      <div class="stat-num">13</div><div class="stat-label">EVM chains</div>
+      <div class="stat"><div class="stat-num">13</div><div class="stat-label">EVM chains</div></div>
       <div class="stat"><div class="stat-num">0</div><div class="stat-label">API keys needed</div></div>
       <div class="stat"><div class="stat-num">13/13</div><div class="stat-label">Tests passing</div></div>
     </div>
@@ -283,8 +283,6 @@
             <option value="324">zkSync</option>
             <option value="59144">Linea</option>
             <option value="250">Fantom</option>
-            <option value="1672">Pharos Mainnet</option>
-            <option value="688688">Pharos Testnet</option>
           </select>
         </div>
         <div class="check-pills">
@@ -332,7 +330,7 @@
       <div class="feature-card">
         <div class="feature-icon">🔑</div>
         <div class="feature-title">No API key required</div>
-        <div class="feature-desc">Uses GoPlus Security's public API tier. Zero setup for any agent to start calling this Skill immediately on any of 11 supported EVM chains.</div>
+        <div class="feature-desc">Uses GoPlus Security's public API tier. Zero setup for any agent to start calling this Skill immediately on any of 13 supported EVM chains.</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">✅</div>
@@ -427,8 +425,6 @@ npm install</pre>
         <div class="chain-chip"><div class="chain-dot" style="background:#4E529A"></div>zkSync<span class="chain-chip-id">324</span></div>
         <div class="chain-chip"><div class="chain-dot" style="background:#61DFFF"></div>Linea<span class="chain-chip-id">59144</span></div>
         <div class="chain-chip"><div class="chain-dot" style="background:#1969FF"></div>Fantom<span class="chain-chip-id">250</span></div>
-        <div class="chain-chip"><div class="chain-dot" style="background:#00D4AA"></div>Pharos Mainnet<span class="chain-chip-id">1672</span></div>
-        <div class="chain-chip"><div class="chain-dot" style="background:#00D4AA"></div>Pharos Testnet<span class="chain-chip-id">688688</span></div>
       </div>
 
       <h2>Risk flags reference</h2>
