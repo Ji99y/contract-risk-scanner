@@ -190,3 +190,19 @@ Most DeFi agents today execute transactions blindly. A honeypot can drain a wall
 ## License
 
 MIT
+
+---
+
+## On-Chain Deployment
+
+ScanRegistry is deployed on Pharos Atlantic Testnet — any agent can call it to log scan requests and results on-chain.
+
+| Field | Value |
+|---|---|
+| Contract | `0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09` |
+| Network | Pharos Atlantic Testnet |
+| Chain ID | 688689 |
+| Block | 24108039 |
+| Tx Hash | `0x3c6e67b7f5e041f4a23748e3d405fd9506ea39c43231fdd4555a5646d1eea1c2` |
+
+Agents call `requestScan(target, chainId, checkType)` before transacting and `logScanResult(target, chainId, riskScore, riskLevel, recommendation)` after the off-chain Skill runs.
