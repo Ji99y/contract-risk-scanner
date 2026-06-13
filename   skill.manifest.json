@@ -7,7 +7,21 @@
   "license": "MIT",
   "tags": ["security", "risk", "EVM", "DeFi", "GoPlus", "pre-transaction"],
   "category": "security",
-  "chain_support": ["pharos", "pharos-testnet", "ethereum", "bsc", "polygon", "arbitrum", "optimism", "avalanche", "fantom", "base", "linea", "scroll", "zkSync"],
+  "chain_support": [
+    "pharos",
+    "pharos-testnet",
+    "ethereum",
+    "bsc",
+    "polygon",
+    "arbitrum",
+    "optimism",
+    "avalanche",
+    "fantom",
+    "base",
+    "linea",
+    "scroll",
+    "zkSync"
+  ],
   "input_schema": {
     "type": "object",
     "required": ["address", "chainId"],
@@ -55,10 +69,22 @@
         "items": {
           "type": "object",
           "properties": {
-            "id": { "type": "string", "description": "Unique flag identifier (e.g. HONEYPOT, ADDR_PHISHING)" },
-            "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-            "message": { "type": "string", "description": "Human-readable explanation of the risk" },
-            "source": { "type": "string", "enum": ["token_security", "address_security"] }
+            "id": {
+              "type": "string",
+              "description": "Unique flag identifier (e.g. HONEYPOT, ADDR_PHISHING)"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable explanation of the risk"
+            },
+            "source": {
+              "type": "string",
+              "enum": ["token_security", "address_security"]
+            }
           }
         }
       },
@@ -77,7 +103,12 @@
         "riskLevel": "CRITICAL",
         "recommendation": "BLOCK",
         "flags": [
-          { "id": "HONEYPOT", "severity": "critical", "message": "Token is a honeypot — you can buy but cannot sell", "source": "token_security" }
+          {
+            "id": "HONEYPOT",
+            "severity": "critical",
+            "message": "Token is a honeypot — you can buy but cannot sell",
+            "source": "token_security"
+          }
         ]
       }
     },

@@ -2,7 +2,11 @@ import { scanContract } from "./scanner";
 import { scanAddress } from "./addressChecker";
 import { buildRiskReport } from "./reporter";
 import { checkApprovals } from "./approvalChecker";
-import { logResultOnChain, getLastOnChainScan, getTotalScans } from "./onchainlogger";
+import {
+  logResultOnChain,
+  getLastOnChainScan,
+  getTotalScans,
+} from "./onchainlogger";
 import type { SkillInput, SkillOutput, BatchInput, BatchOutput } from "./types";
 
 export { getLastOnChainScan, getTotalScans };
@@ -42,14 +46,18 @@ export async function run(input: SkillInput): Promise<SkillOutput> {
   ]);
 
   if (tokenResult.status === "fulfilled") results.token = tokenResult.value;
-  if (addressResult.status === "fulfilled") results.address = addressResult.value;
+  if (addressResult.status === "fulfilled")
+    results.address = addressResult.value;
 
   const report = buildRiskReport(results);
 
   // Auto-log to Pharos ScanRegistry if PHAROS_PRIVATE_KEY is set
   const txHash = await logResultOnChain(normalizedAddress, chainId, report);
   if (txHash) {
-    report.details.onChainLog = { contract: "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09", network: "Pharos Atlantic Testnet" };
+    report.details.onChainLog = {
+      contract: "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09",
+      network: "Pharos Atlantic Testnet",
+    };
   }
 
   return report;
@@ -59,7 +67,10 @@ export async function run(input: SkillInput): Promise<SkillOutput> {
  * Feature #2 — Approval Risk Check
  * Checks if a wallet has dangerous token approvals outstanding.
  */
-export async function runApprovalCheck(address: string, chainId: string | number) {
+export async function runApprovalCheck(
+  address: string,
+  chainId: string | number,
+) {
   return checkApprovals(address, chainId);
 }
 
@@ -73,11 +84,20 @@ export async function runBatch(input: BatchInput): Promise<BatchOutput> {
   if (!addresses || addresses.length === 0) {
     return {
       results: [],
-      summary: { total: 0, safe: 0, caution: 0, blocked: 0, highestRisk: "UNKNOWN", scanDurationMs: 0 },
+      summary: {
+        total: 0,
+        safe: 0,
+        caution: 0,
+        blocked: 0,
+        highestRisk: "UNKNOWN",
+        scanDurationMs: 0,
+      },
     };
   }
 
-  const results: Array<SkillOutput & { address: string; chainId: string | number }> = [];
+  const results: Array<
+    SkillOutput & { address: string; chainId: string | number }
+  > = [];
 
   for (let i = 0; i < addresses.length; i += concurrency) {
     const chunk = addresses.slice(i, i + concurrency);
@@ -85,7 +105,7 @@ export async function runBatch(input: BatchInput): Promise<BatchOutput> {
       chunk.map(async (item) => {
         const result = await run(item);
         return { ...result, address: item.address, chainId: item.chainId };
-      })
+      }),
     );
     results.push(...chunkResults);
     if (i + concurrency < addresses.length) {
@@ -95,7 +115,9 @@ export async function runBatch(input: BatchInput): Promise<BatchOutput> {
 
   const riskOrder = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"];
   let highestRiskIndex = 0;
-  let safe = 0, caution = 0, blocked = 0;
+  let safe = 0,
+    caution = 0,
+    blocked = 0;
 
   for (const r of results) {
     if (r.recommendation === "PROCEED") safe++;

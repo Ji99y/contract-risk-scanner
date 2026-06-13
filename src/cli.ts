@@ -14,9 +14,9 @@ import { run } from "./index";
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: "\x1b[31m", // red
-  high: "\x1b[33m",     // yellow
-  medium: "\x1b[36m",   // cyan
-  low: "\x1b[37m",      // white
+  high: "\x1b[33m", // yellow
+  medium: "\x1b[36m", // cyan
+  low: "\x1b[37m", // white
 };
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
@@ -35,7 +35,9 @@ async function main() {
   const [, , address, chainId, checkType] = process.argv;
 
   if (!address || !chainId) {
-    console.error("Usage: ts-node src/cli.ts <address> <chainId> [token|address|both]");
+    console.error(
+      "Usage: ts-node src/cli.ts <address> <chainId> [token|address|both]",
+    );
     process.exit(1);
   }
 
@@ -55,9 +57,15 @@ async function main() {
 
   const levelColor = colorForLevel(result.riskLevel);
 
-  console.log(`${BOLD}Risk Score   :${RESET} ${levelColor}${result.riskScore}/100${RESET}`);
-  console.log(`${BOLD}Risk Level   :${RESET} ${levelColor}${BOLD}${result.riskLevel}${RESET}`);
-  console.log(`${BOLD}Recommendation:${RESET} ${levelColor}${BOLD}${result.recommendation}${RESET}`);
+  console.log(
+    `${BOLD}Risk Score   :${RESET} ${levelColor}${result.riskScore}/100${RESET}`,
+  );
+  console.log(
+    `${BOLD}Risk Level   :${RESET} ${levelColor}${BOLD}${result.riskLevel}${RESET}`,
+  );
+  console.log(
+    `${BOLD}Recommendation:${RESET} ${levelColor}${BOLD}${result.recommendation}${RESET}`,
+  );
   console.log();
 
   if (result.flags.length === 0) {
@@ -66,9 +74,18 @@ async function main() {
     console.log(`${BOLD}Risk Flags (${result.flags.length}):${RESET}`);
     for (const flag of result.flags) {
       const col = SEVERITY_COLORS[flag.severity] ?? RESET;
-      const icon = flag.severity === "critical" ? "✗" : flag.severity === "high" ? "⚠" : "•";
-      console.log(`  ${col}${icon} [${flag.severity.toUpperCase()}] ${flag.message}${RESET}`);
-      console.log(`    ${"\x1b[2m"}id: ${flag.id} | source: ${flag.source}${RESET}`);
+      const icon =
+        flag.severity === "critical"
+          ? "✗"
+          : flag.severity === "high"
+            ? "⚠"
+            : "•";
+      console.log(
+        `  ${col}${icon} [${flag.severity.toUpperCase()}] ${flag.message}${RESET}`,
+      );
+      console.log(
+        `    ${"\x1b[2m"}id: ${flag.id} | source: ${flag.source}${RESET}`,
+      );
     }
   }
 

@@ -11,7 +11,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
  */
 export async function scanContract(
   address: string,
-  chainId: string | number
+  chainId: string | number,
 ): Promise<GoPlusTokenData | null> {
   const url = `${GOPLUS_BASE}/token_security/${chainId}?contract_addresses=${address}`;
 
@@ -20,9 +20,9 @@ export async function scanContract(
 
   try {
     if (PHAROS_CHAIN_IDS.has(String(chainId))) {
-  return null; // GoPlus does not yet index Pharos — address check still runs
-}
-const res = await fetch(url, {
+      return null; // GoPlus does not yet index Pharos — address check still runs
+    }
+    const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
@@ -33,10 +33,12 @@ const res = await fetch(url, {
       return null;
     }
 
-    const json = await res.json() as GoPlusTokenResponse;
+    const json = (await res.json()) as GoPlusTokenResponse;
 
     if (json.code !== 1) {
-      console.error(`[ContractRiskScanner] Token API returned code ${json.code}: ${json.message}`);
+      console.error(
+        `[ContractRiskScanner] Token API returned code ${json.code}: ${json.message}`,
+      );
       return null;
     }
 

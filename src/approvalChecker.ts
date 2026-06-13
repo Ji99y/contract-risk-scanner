@@ -32,7 +32,7 @@ export interface ApprovalCheckResult {
 
 export async function checkApprovals(
   walletAddress: string,
-  chainId: string | number
+  chainId: string | number,
 ): Promise<ApprovalCheckResult | null> {
   const url = `${GOPLUS_BASE}/approval_security/${chainId}?addresses=${walletAddress.toLowerCase()}`;
 
@@ -51,7 +51,7 @@ export async function checkApprovals(
       return null;
     }
 
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       code: number;
       message: string;
       result?: Array<{
@@ -73,28 +73,37 @@ export async function checkApprovals(
 
     for (const token of json.result) {
       for (const approval of token.approved_list ?? []) {
-        const isUnlimited = approval.approved_amount === "Unlimited" ||
-          BigInt(approval.approved_amount ?? "0") > BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935") / BigInt(2);
+        const isUnlimited =
+          approval.approved_amount === "Unlimited" ||
+          BigInt(approval.approved_amount ?? "0") >
+            BigInt(
+              "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+            ) /
+              BigInt(2);
 
-        const isRisky = isUnlimited || !approval.is_contract || approval.tag === "risky";
+        const isRisky =
+          isUnlimited || !approval.is_contract || approval.tag === "risky";
 
         approvals.push({
           tokenAddress: token.token_address ?? "",
           tokenSymbol: token.token_symbol ?? "UNKNOWN",
           spenderAddress: approval.approved_contract ?? "",
           spenderName: approval.approved_contract_name ?? "Unknown contract",
-          approvalValue: approval.approved_amount === "Unlimited" ? "Unlimited" : approval.approved_amount ?? "0",
+          approvalValue:
+            approval.approved_amount === "Unlimited"
+              ? "Unlimited"
+              : (approval.approved_amount ?? "0"),
           isRisky,
           riskReason: isUnlimited
             ? "Unlimited approval — spender can drain entire token balance"
             : !approval.is_contract
-            ? "Approved to an EOA (non-contract address)"
-            : "Flagged as risky by GoPlus",
+              ? "Approved to an EOA (non-contract address)"
+              : "Flagged as risky by GoPlus",
         });
       }
     }
 
-    const riskyApprovals = approvals.filter(a => a.isRisky);
+    const riskyApprovals = approvals.filter((a) => a.isRisky);
 
     return {
       hasRiskyApprovals: riskyApprovals.length > 0,

@@ -9,7 +9,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
  */
 export async function scanAddress(
   address: string,
-  chainId: string | number
+  chainId: string | number,
 ): Promise<GoPlusAddressResponse["result"] | null> {
   const url = `${GOPLUS_BASE}/address_security/${address}?chain_id=${chainId}`;
 
@@ -28,10 +28,12 @@ export async function scanAddress(
       return null;
     }
 
-    const json = await res.json() as GoPlusAddressResponse;
+    const json = (await res.json()) as GoPlusAddressResponse;
 
     if (json.code !== 1) {
-      console.error(`[ContractRiskScanner] Address API returned code ${json.code}: ${json.message}`);
+      console.error(
+        `[ContractRiskScanner] Address API returned code ${json.code}: ${json.message}`,
+      );
       return null;
     }
 

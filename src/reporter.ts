@@ -249,21 +249,24 @@ function scoreToLevel(score: number): SkillOutput["riskLevel"] {
   return "CRITICAL";
 }
 
-function levelToRecommendation(level: SkillOutput["riskLevel"]): SkillOutput["recommendation"] {
+function levelToRecommendation(
+  level: SkillOutput["riskLevel"],
+): SkillOutput["recommendation"] {
   if (level === "SAFE") return "PROCEED";
   if (level === "MEDIUM") return "CAUTION";
   return "BLOCK";
 }
 
-export function buildRiskReport(
-  results: Record<string, unknown>
-): SkillOutput {
+export function buildRiskReport(results: Record<string, unknown>): SkillOutput {
   const flags: RiskFlag[] = [];
   let rawScore = 0;
   const details: Record<string, unknown> = {};
 
   const tokenData = results.token as GoPlusTokenData | null | undefined;
-  const addressData = results.address as GoPlusAddressResponse["result"] | null | undefined;
+  const addressData = results.address as
+    | GoPlusAddressResponse["result"]
+    | null
+    | undefined;
 
   // --- Token checks ---
   if (tokenData) {
@@ -272,8 +275,12 @@ export function buildRiskReport(
       symbol: tokenData.token_symbol,
       totalSupply: tokenData.total_supply,
       holderCount: tokenData.holder_count,
-      buyTax: tokenData.buy_tax ? `${(parseFloat(tokenData.buy_tax) * 100).toFixed(1)}%` : "unknown",
-      sellTax: tokenData.sell_tax ? `${(parseFloat(tokenData.sell_tax) * 100).toFixed(1)}%` : "unknown",
+      buyTax: tokenData.buy_tax
+        ? `${(parseFloat(tokenData.buy_tax) * 100).toFixed(1)}%`
+        : "unknown",
+      sellTax: tokenData.sell_tax
+        ? `${(parseFloat(tokenData.sell_tax) * 100).toFixed(1)}%`
+        : "unknown",
       isInDex: tokenData.is_in_dex === "1",
       isTrusted: tokenData.trust_list === "1",
       creatorAddress: tokenData.creator_address,
@@ -297,7 +304,8 @@ export function buildRiskReport(
       rawScore = 0;
     }
   } else {
-    details.tokenNote = "Token security data unavailable (not an ERC-20 or API limit reached)";
+    details.tokenNote =
+      "Token security data unavailable (not an ERC-20 or API limit reached)";
   }
 
   // --- Address checks ---
@@ -316,7 +324,8 @@ export function buildRiskReport(
       }
     }
   } else {
-    details.addressNote = "Address security data unavailable or API limit reached";
+    details.addressNote =
+      "Address security data unavailable or API limit reached";
   }
 
   const riskScore = clamp(rawScore, 0, 100);

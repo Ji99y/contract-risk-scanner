@@ -21,7 +21,7 @@ import { run, runApprovalCheck, getLastOnChainScan } from "../src/index";
 const AGENT_CONFIG = {
   name: "SafeTradeAgent",
   version: "1.0.0",
-  maxRiskScore: 30,       // Block anything above MEDIUM
+  maxRiskScore: 30, // Block anything above MEDIUM
   requireOpenSource: true,
   blockOnHoneypot: true,
   checkApprovals: true,
@@ -68,7 +68,9 @@ async function evaluateTrade(request: TradeRequest): Promise<TradeDecision> {
     const lastScan = await getLastOnChainScan(tokenAddress);
     if (lastScan && lastScan.timestamp > 0) {
       const age = Math.floor((Date.now() / 1000 - lastScan.timestamp) / 60);
-      console.log(`  Found previous scan: ${lastScan.riskLevel} (${age} minutes ago)`);
+      console.log(
+        `  Found previous scan: ${lastScan.riskLevel} (${age} minutes ago)`,
+      );
       onChainHistory = {
         lastScanned: new Date(lastScan.timestamp * 1000).toISOString(),
         previousRiskScore: lastScan.riskScore,
@@ -110,8 +112,12 @@ async function evaluateTrade(request: TradeRequest): Promise<TradeDecision> {
       if (approvals.hasRiskyApprovals) {
         approvalRisk = true;
         console.log("  ⚠ Wallet has risky approvals outstanding");
-        for (const a of approvals.approvals.filter(x => x.isRisky).slice(0, 2)) {
-          console.log(`    - ${a.tokenSymbol}: ${a.approvalValue} approved to ${a.spenderName}`);
+        for (const a of approvals.approvals
+          .filter((x) => x.isRisky)
+          .slice(0, 2)) {
+          console.log(
+            `    - ${a.tokenSymbol}: ${a.approvalValue} approved to ${a.spenderName}`,
+          );
         }
       }
     }
@@ -122,7 +128,7 @@ async function evaluateTrade(request: TradeRequest): Promise<TradeDecision> {
   // ── Step 4: Make trade decision ───────────────────────────────────────────
   console.log("[4/4] Making trade decision...");
 
-  const flags = scanResult.flags.map(f => f.id);
+  const flags = scanResult.flags.map((f) => f.id);
   let approved = true;
   let reason = "All security checks passed";
 
@@ -143,7 +149,8 @@ async function evaluateTrade(request: TradeRequest): Promise<TradeDecision> {
     reason = `BLOCKED: ${scanResult.flags[0]?.message ?? "Critical risk detected"}`;
   } else if (approvalRisk) {
     approved = false;
-    reason = "BLOCKED: Wallet has dangerous token approvals — revoke before trading";
+    reason =
+      "BLOCKED: Wallet has dangerous token approvals — revoke before trading";
   }
 
   return {
@@ -172,7 +179,9 @@ async function executeTrade(request: TradeRequest): Promise<void> {
     console.log(`   Risk: ${decision.riskLevel} (${decision.riskScore}/100)`);
     console.log("\n[Agent] Executing swap...");
     console.log("[Agent] ✓ Swap submitted successfully (simulated)");
-    console.log("[Agent] Transaction would be signed and broadcast here in production");
+    console.log(
+      "[Agent] Transaction would be signed and broadcast here in production",
+    );
   } else {
     console.log(`🚫 REJECTED — ${decision.reason}`);
     console.log(`   Risk: ${decision.riskLevel} (${decision.riskScore}/100)`);
@@ -183,8 +192,12 @@ async function executeTrade(request: TradeRequest): Promise<void> {
   }
 
   if (decision.onChainHistory) {
-    console.log(`\n[Agent] On-chain history: previously scanned at ${decision.onChainHistory.lastScanned}`);
-    console.log(`         Previous risk score: ${decision.onChainHistory.previousRiskScore}/100`);
+    console.log(
+      `\n[Agent] On-chain history: previously scanned at ${decision.onChainHistory.lastScanned}`,
+    );
+    console.log(
+      `         Previous risk score: ${decision.onChainHistory.previousRiskScore}/100`,
+    );
   }
 
   console.log(`${"═".repeat(50)}\n`);
@@ -196,12 +209,18 @@ async function main() {
   const [, , tokenAddress, chainId, amount, walletAddress] = process.argv;
 
   if (!tokenAddress || !chainId) {
-    console.log("Usage: npx ts-node examples/SafeTradeAgent.ts <tokenAddress> <chainId> [amount] [walletAddress]");
+    console.log(
+      "Usage: npx ts-node examples/SafeTradeAgent.ts <tokenAddress> <chainId> [amount] [walletAddress]",
+    );
     console.log("\nExamples:");
     console.log("  # Safe token (DAI on Ethereum)");
-    console.log("  npx ts-node examples/SafeTradeAgent.ts 0x6b175474e89094c44da98b954eedeac495271d0f 1 100");
+    console.log(
+      "  npx ts-node examples/SafeTradeAgent.ts 0x6b175474e89094c44da98b954eedeac495271d0f 1 100",
+    );
     console.log("\n  # Risky token on BSC");
-    console.log("  npx ts-node examples/SafeTradeAgent.ts 0x64c37c3d6b5ff0fdea26eec0c8b6de487105291c 56 50");
+    console.log(
+      "  npx ts-node examples/SafeTradeAgent.ts 0x64c37c3d6b5ff0fdea26eec0c8b6de487105291c 56 50",
+    );
     process.exit(0);
   }
 
@@ -213,7 +232,7 @@ async function main() {
   });
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error("Fatal error:", err);
   process.exit(1);
 });

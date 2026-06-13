@@ -11,8 +11,10 @@
 
 import type { SkillOutput } from "./types";
 
-export const SCAN_REGISTRY_ADDRESS = "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09";
-export const PHAROS_RPC_URL = process.env.PHAROS_RPC_URL ?? "https://atlantic.dplabs-internal.com";
+export const SCAN_REGISTRY_ADDRESS =
+  "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09";
+export const PHAROS_RPC_URL =
+  process.env.PHAROS_RPC_URL ?? "https://atlantic.dplabs-internal.com";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -20,7 +22,9 @@ const REQUEST_TIMEOUT_MS = 15_000;
 
 const ABI = {
   requestScan: "0x" + keccak256Selector("requestScan(address,uint256,string)"),
-  logScanResult: "0x" + keccak256Selector("logScanResult(address,uint256,uint8,string,string)"),
+  logScanResult:
+    "0x" +
+    keccak256Selector("logScanResult(address,uint256,uint8,string,string)"),
   getLastScan: "0x" + keccak256Selector("getLastScan(address)"),
   totalScans: "0x" + keccak256Selector("totalScans()"),
 };
@@ -29,11 +33,11 @@ const ABI = {
 function keccak256Selector(sig: string): string {
   // Pre-computed selectors for our contract functions
   const selectors: Record<string, string> = {
-  "requestScan(address,uint256,string)": "7b9a3240",
-  "logScanResult(address,uint256,uint8,string,string)": "fd04f504",
-  "getLastScan(address)": "d5920705",
-  "totalScans()": "0c23792b",
-};
+    "requestScan(address,uint256,string)": "7b9a3240",
+    "logScanResult(address,uint256,uint8,string,string)": "fd04f504",
+    "getLastScan(address)": "d5920705",
+    "totalScans()": "0c23792b",
+  };
   return selectors[sig] ?? "00000000";
 }
 
@@ -54,7 +58,9 @@ function encodeUint8(n: number): string {
 function encodeString(s: string): string {
   const bytes = Buffer.from(s, "utf8");
   const len = bytes.length.toString(16).padStart(64, "0");
-  const data = bytes.toString("hex").padEnd(Math.ceil(bytes.length / 32) * 64, "0");
+  const data = bytes
+    .toString("hex")
+    .padEnd(Math.ceil(bytes.length / 32) * 64, "0");
   return len + data;
 }
 
@@ -70,7 +76,10 @@ async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
       signal: controller.signal,
     });
-    const json = await res.json() as { result?: unknown; error?: { message: string } };
+    const json = (await res.json()) as {
+      result?: unknown;
+      error?: { message: string };
+    };
     if (json.error) throw new Error(json.error.message);
     return json.result;
   } finally {
@@ -92,7 +101,7 @@ async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
 export async function logResultOnChain(
   target: string,
   chainId: string | number,
-  result: SkillOutput
+  result: SkillOutput,
 ): Promise<string | null> {
   const privateKey = process.env.PHAROS_PRIVATE_KEY;
   if (!privateKey) {
@@ -110,15 +119,29 @@ export async function logResultOnChain(
     // String offsets: riskLevel at offset 160, recommendation after
     const offset1 = (160).toString(16).padStart(64, "0");
     const riskLevelEnc = encodeString(result.riskLevel);
-    const offset2 = (160 + 32 + Math.ceil(result.riskLevel.length / 32) * 32).toString(16).padStart(64, "0");
+    const offset2 = (160 + 32 + Math.ceil(result.riskLevel.length / 32) * 32)
+      .toString(16)
+      .padStart(64, "0");
     const recEnc = encodeString(result.recommendation);
 
-    const data = "0x" + selector + addrEnc + chainEnc + scoreEnc + offset1 + offset2 + riskLevelEnc + recEnc;
+    const data =
+      "0x" +
+      selector +
+      addrEnc +
+      chainEnc +
+      scoreEnc +
+      offset1 +
+      offset2 +
+      riskLevelEnc +
+      recEnc;
 
     // Get nonce
     const fromAddr = process.env.PHAROS_WALLET_ADDRESS ?? "";
-    const nonce = await rpcCall("eth_getTransactionCount", [fromAddr, "latest"]) as string;
-    const gasPrice = await rpcCall("eth_gasPrice", []) as string;
+    const nonce = (await rpcCall("eth_getTransactionCount", [
+      fromAddr,
+      "latest",
+    ])) as string;
+    const gasPrice = (await rpcCall("eth_gasPrice", [])) as string;
 
     // Build raw transaction (requires signing — use cast or ethers in production)
     // For demo purposes, log the calldata that would be sent
@@ -150,35 +173,46 @@ export async function getLastOnChainScan(target: string): Promise<{
     const selector = "d5920705"; // getLastScan selector
     const data = "0x" + selector + encodeAddress(target);
 
-    const result = await rpcCall("eth_call", [
+    const result = (await rpcCall("eth_call", [
       { to: SCAN_REGISTRY_ADDRESS, data },
       "latest",
-    ]) as string;
+    ])) as string;
 
     // Empty or zero result means no scan history
-    if (!result || result === "0x" || result === "0x" + "0".repeat(64)) return null;
+    if (!result || result === "0x" || result === "0x" + "0".repeat(64))
+      return null;
 
     const hex = result.replace("0x", "");
-if (hex.length < 64 * 6) return null;
+    if (hex.length < 64 * 6) return null;
 
-// Struct is wrapped with a 32-byte dynamic offset prefix (slot 0 = 0x20)
-// slot 0  (0-64):    dynamic offset = 32
-// slot 1  (64-128):  target address
-// slot 2  (128-192): chainId
-// slot 3  (192-256): riskScore (uint8)
-// slot 4  (256-320): offset to riskLevel string
-// slot 5  (320-384): offset to recommendation string
-// slot 6  (384-448): timestamp
-const chainId = parseInt(hex.slice(128, 192), 16);
-const riskScore = parseInt(hex.slice(192, 256), 16);
-const timestamp = parseInt(hex.slice(384, 448), 16);
+    // Struct is wrapped with a 32-byte dynamic offset prefix (slot 0 = 0x20)
+    // slot 0  (0-64):    dynamic offset = 32
+    // slot 1  (64-128):  target address
+    // slot 2  (128-192): chainId
+    // slot 3  (192-256): riskScore (uint8)
+    // slot 4  (256-320): offset to riskLevel string
+    // slot 5  (320-384): offset to recommendation string
+    // slot 6  (384-448): timestamp
+    const chainId = parseInt(hex.slice(128, 192), 16);
+    const riskScore = parseInt(hex.slice(192, 256), 16);
+    const timestamp = parseInt(hex.slice(384, 448), 16);
 
-if (timestamp === 0 && chainId === 0) return null;
+    if (timestamp === 0 && chainId === 0) return null;
 
     return {
       riskScore,
-      riskLevel: riskScore === 0 ? "SAFE" : riskScore <= 15 ? "LOW" : riskScore <= 30 ? "MEDIUM" : riskScore <= 55 ? "HIGH" : "CRITICAL",
-      recommendation: riskScore <= 15 ? "PROCEED" : riskScore <= 30 ? "CAUTION" : "BLOCK",
+      riskLevel:
+        riskScore === 0
+          ? "SAFE"
+          : riskScore <= 15
+            ? "LOW"
+            : riskScore <= 30
+              ? "MEDIUM"
+              : riskScore <= 55
+                ? "HIGH"
+                : "CRITICAL",
+      recommendation:
+        riskScore <= 15 ? "PROCEED" : riskScore <= 30 ? "CAUTION" : "BLOCK",
       timestamp,
       chainId,
     };
@@ -194,10 +228,10 @@ if (timestamp === 0 && chainId === 0) return null;
 export async function getTotalScans(): Promise<number> {
   try {
     const data = "0x0c23792b"; // totalScans() selector
-    const result = await rpcCall("eth_call", [
+    const result = (await rpcCall("eth_call", [
       { to: SCAN_REGISTRY_ADDRESS, data },
       "latest",
-    ]) as string;
+    ])) as string;
     return parseInt(result, 16);
   } catch {
     return 0;
