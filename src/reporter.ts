@@ -244,15 +244,13 @@ function clamp(n: number, min: number, max: number): number {
 }
 
 function scoreToLevel(score: number): SkillOutput["riskLevel"] {
-  if (score === 0) return "SAFE";
-  if (score <= 15) return "LOW";
-  if (score <= 30) return "MEDIUM";
-  if (score <= 55) return "HIGH";
+  if (score <= 30) return "SAFE";
+  if (score > 30 && score <= 65) return "MEDIUM";
   return "CRITICAL";
 }
 
 function levelToRecommendation(level: SkillOutput["riskLevel"]): SkillOutput["recommendation"] {
-  if (level === "SAFE" || level === "LOW") return "PROCEED";
+  if (level === "SAFE") return "PROCEED";
   if (level === "MEDIUM") return "CAUTION";
   return "BLOCK";
 }
