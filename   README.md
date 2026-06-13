@@ -151,7 +151,7 @@ This Skill is designed to pass CertiK Skill Scanner review:
 
 ---
 
-## Supported Chains
+## 13 supported chains (including Pharos Mainnet + Testnet)
 
 | Chain | ID |
 |---|---|
@@ -166,6 +166,8 @@ This Skill is designed to pass CertiK Skill Scanner review:
 | Scroll | 534352 |
 | zkSync Era | 324 |
 | Fantom | 250 |
+| Pharos Mainnet | 1672 |
+| Pharos Testnet | 688688 |
 
 ---
 

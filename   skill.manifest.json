@@ -7,7 +7,7 @@
   "license": "MIT",
   "tags": ["security", "risk", "EVM", "DeFi", "GoPlus", "pre-transaction"],
   "category": "security",
-  "chain_support": ["ethereum", "bsc", "polygon", "arbitrum", "optimism", "avalanche", "fantom", "base", "linea", "scroll", "zkSync"],
+  "chain_support": ["pharos", "pharos-testnet", "ethereum", "bsc", "polygon", "arbitrum", "optimism", "avalanche", "fantom", "base", "linea", "scroll", "zkSync"],
   "input_schema": {
     "type": "object",
     "required": ["address", "chainId"],
