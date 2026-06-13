@@ -1,0 +1,10 @@
+{
+  "ScanRegistry": {
+    "address": "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09",
+    "chainId": 688689,
+    "network": "Pharos Atlantic Testnet",
+    "deployer": "0xbf67b51A69F20B7034e38C13DE376ee34B855058",
+    "blockNumber": 24108039,
+    "txHash": "0x3c6e67b7f5e041f4a23748e3d405fd9506ea39c43231fdd4555a5646d1eea1c2"
+  }
+}
