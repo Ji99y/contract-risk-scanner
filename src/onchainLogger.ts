@@ -12,7 +12,7 @@
 import type { SkillOutput } from "./types";
 
 export const SCAN_REGISTRY_ADDRESS = "0xa921bFDb1F5e61d78aC3aE9833AD9fFdbe3e2e09";
-export const PHAROS_RPC_URL = process.env.PHAROS_RPC_URL ?? "https://testnet.dplabs-internal.com";
+export const PHAROS_RPC_URL = process.env.PHAROS_RPC_URL ?? "https://atlantic.dplabs-internal.com";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -29,11 +29,11 @@ const ABI = {
 function keccak256Selector(sig: string): string {
   // Pre-computed selectors for our contract functions
   const selectors: Record<string, string> = {
-    "requestScan(address,uint256,string)": "7b9a3240",
-    "logScanResult(address,uint256,uint8,string,string)": "8f9a4526",
-    "getLastScan(address)": "6d5a1729",
-    "totalScans()": "37a0b7bd",
-  };
+  "requestScan(address,uint256,string)": "7b9a3240",
+  "logScanResult(address,uint256,uint8,string,string)": "fd04f504",
+  "getLastScan(address)": "d5920705",
+  "totalScans()": "0c23792b",
+};
   return selectors[sig] ?? "00000000";
 }
 
@@ -102,7 +102,7 @@ export async function logResultOnChain(
 
   try {
     // Encode calldata for logScanResult(address,uint256,uint8,string,string)
-    const selector = "8f9a4526"; // logScanResult selector
+    const selector = "fd04f504"; // logScanResult selector
     const addrEnc = encodeAddress(target);
     const chainEnc = encodeUint256(chainId);
     const scoreEnc = encodeUint8(Math.max(0, result.riskScore));
@@ -147,7 +147,7 @@ export async function getLastOnChainScan(target: string): Promise<{
   chainId: number;
 } | null> {
   try {
-    const selector = "6d5a1729"; // getLastScan selector
+    const selector = "d5920705"; // getLastScan selector
     const data = "0x" + selector + encodeAddress(target);
 
     const result = await rpcCall("eth_call", [
@@ -155,17 +155,25 @@ export async function getLastOnChainScan(target: string): Promise<{
       "latest",
     ]) as string;
 
-    if (!result || result === "0x") return null;
+    // Empty or zero result means no scan history
+    if (!result || result === "0x" || result === "0x" + "0".repeat(64)) return null;
 
-    // Decode the ScanRecord struct from ABI-encoded bytes
     const hex = result.replace("0x", "");
-    if (hex.length < 64 * 6) return null;
+if (hex.length < 64 * 6) return null;
 
-    const chainId = parseInt(hex.slice(64, 128), 16);
-    const riskScore = parseInt(hex.slice(128, 192), 16);
-    const timestamp = parseInt(hex.slice(320, 384), 16);
+// Struct is wrapped with a 32-byte dynamic offset prefix (slot 0 = 0x20)
+// slot 0  (0-64):    dynamic offset = 32
+// slot 1  (64-128):  target address
+// slot 2  (128-192): chainId
+// slot 3  (192-256): riskScore (uint8)
+// slot 4  (256-320): offset to riskLevel string
+// slot 5  (320-384): offset to recommendation string
+// slot 6  (384-448): timestamp
+const chainId = parseInt(hex.slice(128, 192), 16);
+const riskScore = parseInt(hex.slice(192, 256), 16);
+const timestamp = parseInt(hex.slice(384, 448), 16);
 
-    if (timestamp === 0) return null;
+if (timestamp === 0 && chainId === 0) return null;
 
     return {
       riskScore,
@@ -174,8 +182,8 @@ export async function getLastOnChainScan(target: string): Promise<{
       timestamp,
       chainId,
     };
-  } catch (err) {
-    console.error("[OnChainLogger] Failed to fetch on-chain scan:", err);
+  } catch {
+    // No scan history found — not an error
     return null;
   }
 }
@@ -185,7 +193,7 @@ export async function getLastOnChainScan(target: string): Promise<{
  */
 export async function getTotalScans(): Promise<number> {
   try {
-    const data = "0x37a0b7bd"; // totalScans() selector
+    const data = "0x0c23792b"; // totalScans() selector
     const result = await rpcCall("eth_call", [
       { to: SCAN_REGISTRY_ADDRESS, data },
       "latest",
