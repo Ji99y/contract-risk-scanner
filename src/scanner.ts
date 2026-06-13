@@ -1,6 +1,8 @@
 import type { GoPlusTokenData, GoPlusTokenResponse } from "./types";
 
 const GOPLUS_BASE = "https://api.gopluslabs.io/api/v1";
+// Pharos chains — GoPlus indexing coming soon
+const PHAROS_CHAIN_IDS = new Set(["1672", "688688"]);
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
@@ -17,7 +19,10 @@ export async function scanContract(
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url, {
+    if (PHAROS_CHAIN_IDS.has(String(chainId))) {
+  return null; // GoPlus does not yet index Pharos — address check still runs
+}
+const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
