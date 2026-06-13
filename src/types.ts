@@ -86,3 +86,24 @@ export interface GoPlusAddressResponse {
     data_source?: string;
   };
 }
+
+export interface BatchInput {
+  addresses: Array<{
+    address: string;
+    chainId: string | number;
+    checkType?: "token" | "address" | "both";
+  }>;
+  concurrency?: number;
+}
+
+export interface BatchOutput {
+  results: Array<SkillOutput & { address: string; chainId: string | number }>;
+  summary: {
+    total: number;
+    safe: number;
+    caution: number;
+    blocked: number;
+    highestRisk: string;
+    scanDurationMs: number;
+  };
+}
